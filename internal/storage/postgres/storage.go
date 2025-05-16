@@ -7,23 +7,20 @@ import (
 	_ "github.com/lib/pq"
 )
 
-type StoragePG struct {
+type Storagepostgres struct {
 	db *sql.DB
 }
 
 //подключение
 
-func NewStoragePG(dsn string) *StoragePG {
+func NewStoragepostgres(dsn string) *Storagepostgres {
 	db, err := sql.Open("postgres", dsn)
 	if err != nil {
-		// panic(fmt.Sprintf("Ошибка подкл" + err.Error()))
 		panic("Ошибка подкл" + err.Error())
 	}
-
 	if err = db.Ping(); err != nil {
-		// panic(fmt.Sprintf("Недоступн база" + err.Error()))
 		panic("Недоступн база" + err.Error())
 	}
 	fmt.Println("Подключено")
-	return &StoragePG{db: db}
+	return &Storagepostgres{db: db}
 }
