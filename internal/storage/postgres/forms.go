@@ -4,6 +4,7 @@ import (
 	"time"
 )
 
+// Form — структура для работы с таблицей forms в БД
 type Form struct {
 	ID        int       `json:"id"`
 	Name      string    `json:"name"`
@@ -11,6 +12,7 @@ type Form struct {
 	CreatedAt time.Time `json:"created_at"`
 }
 
+// Response — структура для работы с таблицей responses в БД
 type Response struct {
 	ID        int       `json:"id"`
 	FormID    int       `json:"form_id"`
@@ -19,11 +21,15 @@ type Response struct {
 	Status    string    `json:"status"`
 }
 
+// CreateForm — добавляет новую форму в таблицу forms
+// Принимает имя и схему формы, возвращает ошибку при неудаче
 func (s *Storagepostgres) CreateForm(name, schema string) error {
 	_, err := s.db.Exec(`INSERT INTO forms (name, schema, created_at) VALUES ($1, $2, now())`, name, schema)
 	return err
 }
 
+// GetForms — получает список всех форм из таблицы forms
+// Возвращает слайс структур Form и ошибку
 func (s *Storagepostgres) GetForms() ([]Form, error) {
 	rows, err := s.db.Query(`SELECT id, name, schema, created_at FROM forms`)
 	if err != nil {
@@ -42,6 +48,8 @@ func (s *Storagepostgres) GetForms() ([]Form, error) {
 	return forms, nil
 }
 
+// GetFormByID — получает одну форму по её ID из таблицы forms
+// Возвращает структуру Form и ошибку
 func (s *Storagepostgres) GetFormByID(id int) (Form, error) {
 	var f Form
 	err := s.db.QueryRow(`SELECT id, name, schema, created_at FROM forms WHERE id = $1`, id).
@@ -49,6 +57,8 @@ func (s *Storagepostgres) GetFormByID(id int) (Form, error) {
 	return f, err
 }
 
+// SaveResponse — сохраняет новый ответ на форму в таблицу responses
+// Устанавливает статус по умолчанию 'new'
 func (s *Storagepostgres) SaveResponse(formID int, data string) error {
 	_, err := s.db.Exec(
 		`INSERT INTO responses (form_id, data, created_at, status) VALUES ($1, $2, now(), 'new')`,
@@ -57,6 +67,8 @@ func (s *Storagepostgres) SaveResponse(formID int, data string) error {
 	return err
 }
 
+// GetResponsesByFormID — получает все ответы для формы по её ID из таблицы responses
+// Возвращает слайс структур Response и ошибку
 func (s *Storagepostgres) GetResponsesByFormID(formID int) ([]Response, error) {
 	rows, err := s.db.Query(
 		`SELECT id, form_id, data, created_at, status FROM responses WHERE form_id = $1`,
@@ -78,6 +90,7 @@ func (s *Storagepostgres) GetResponsesByFormID(formID int) ([]Response, error) {
 	return responses, nil
 }
 
+// UpdateResponseStatus — обновляет статус конкретного ответа по его ID в таблице responses.
 func (s *Storagepostgres) UpdateResponseStatus(id int, status string) error {
 	_, err := s.db.Exec(`UPDATE responses SET status = $1 WHERE id = $2`, status, id)
 	return err

@@ -10,6 +10,7 @@ import (
 	httproutes "rbs-feedbox/internal/transport"
 )
 
+// main - инициализирует хранилище, сервисный слой и регистрирует HTTP-маршруты.
 func main() {
 	dsn := fmt.Sprintf(
 		"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
