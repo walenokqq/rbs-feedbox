@@ -8,8 +8,14 @@ import (
 	"strings"
 )
 
+func enableCors(w *http.ResponseWriter) {
+	(*w).Header().Set("Access-Control-Allow-Origin", "*")
+	(*w).Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+}
+
 func Register(svc *service.Service) {
 	http.HandleFunc("/api/responses/", func(w http.ResponseWriter, r *http.Request) {
+		enableCors(&w)
 		if r.Method != http.MethodPatch {
 			http.Error(w, "не поддерживается метод", http.StatusMethodNotAllowed)
 			return
@@ -36,16 +42,19 @@ func Register(svc *service.Service) {
 	})
 
 	http.HandleFunc("/api/forms", func(w http.ResponseWriter, r *http.Request) {
+		enableCors(&w)
 		if r.Method == http.MethodPost {
 			var req struct {
-				Name   string `json:"name"`
-				Schema string `json:"schema"`
+				Title       string `json:"title"`
+				Schema      string `json:"schema"`
+				Description string `json:"description"`
+				ProjectID   int    `json:"project_id"`
 			}
 			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 				http.Error(w, "неверный JSON", http.StatusBadRequest)
 				return
 			}
-			err := svc.CreateForm(req.Name, req.Schema)
+			err := svc.CreateForm(req.Title, req.Schema, req.Description, req.ProjectID)
 			if err != nil {
 				http.Error(w, "ошибка создания формы: "+err.Error(), http.StatusInternalServerError)
 				return
@@ -65,7 +74,8 @@ func Register(svc *service.Service) {
 		http.Error(w, "неподдерживаемый метод", http.StatusMethodNotAllowed)
 	})
 
-	http.HandleFunc("/api/forms/", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/api/form/", func(w http.ResponseWriter, r *http.Request) {
+		enableCors(&w)
 		path := r.URL.Path
 
 		if strings.HasSuffix(path, "/submit") && r.Method == http.MethodPost {
@@ -111,7 +121,7 @@ func Register(svc *service.Service) {
 		}
 
 		if r.Method == http.MethodGet {
-			idStr := strings.TrimPrefix(path, "/api/forms/")
+			idStr := strings.TrimPrefix(path, "/api/form/")
 			id, err := strconv.Atoi(idStr)
 			if err != nil {
 				http.Error(w, "неверный ID", http.StatusBadRequest)
@@ -130,8 +140,78 @@ func Register(svc *service.Service) {
 		http.Error(w, "неподдерживаемый маршрут", http.StatusNotFound)
 	})
 
-	// тестовая заглушка
+	http.HandleFunc("/api/projects", func(w http.ResponseWriter, r *http.Request) {
+		enableCors(&w)
+		switch r.Method {
+		case http.MethodPost:
+			var req struct {
+				Title       string `json:"title"`
+				Description string `json:"description"`
+			}
+
+			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+				http.Error(w, "неверный JSON: "+err.Error(), http.StatusBadRequest)
+				return
+			}
+
+			if err := svc.CreateProject(req.Title, req.Description); err != nil {
+				http.Error(w, "ошибка создания проекта: "+err.Error(), http.StatusInternalServerError)
+				return
+			}
+
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(map[string]string{
+				"status": "Проект успешно создан",
+			})
+			return
+
+		case http.MethodGet:
+			projects, err := svc.GetProjects()
+			if err != nil {
+				http.Error(w, "Ошибка получения проектов: "+err.Error(), http.StatusInternalServerError)
+				return
+			}
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(projects)
+
+		default:
+			http.Error(w, "Метод не поддерживается", http.StatusMethodNotAllowed)
+		}
+	})
+	http.HandleFunc("/api/projects/", func(w http.ResponseWriter, r *http.Request) {
+		enableCors(&w)
+		if r.Method == http.MethodGet {
+			parts := strings.Split(r.URL.Path, "/")
+			if len(parts) < 4 {
+				http.Error(w, "Неверный URL", http.StatusBadRequest)
+				return
+			}
+
+			// Проверяем, если запрос /api/projects/{id}/forms
+			if len(parts) >= 5 && parts[4] == "forms" {
+				projectID, err := strconv.Atoi(parts[3])
+				if err != nil {
+					http.Error(w, "Неверный ID проекта", http.StatusBadRequest)
+					return
+				}
+
+				forms, err := svc.GetFormsByProjectID(projectID)
+				if err != nil {
+					http.Error(w, "Ошибка получения форм: "+err.Error(), http.StatusInternalServerError)
+					return
+				}
+
+				w.Header().Set("Content-Type", "application/json")
+				json.NewEncoder(w).Encode(forms)
+				return
+			}
+
+			http.Error(w, "Не найден", http.StatusNotFound)
+		}
+	})
+
+	// Отдаем статику по маршруту http://localhost:8080/
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("сервер работает"))
+		http.FileServer(http.Dir("frontend/dist"))
 	})
 }

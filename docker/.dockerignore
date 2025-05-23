@@ -1,0 +1,43 @@
+# Игнорируем системные/IDE файлы
+.git/
+.gitignore
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Игнорируем зависимости Node.js
+**/node_modules/
+npm-debug.log
+yarn-error.log
+.pnpm-debug.log
+
+# Игнорируем артефакты сборки
+dist/
+build/
+*.exe
+*.test
+
+# Игнорируем конфиги и env-файлы
+.env
+.env.local
+.env*.local
+docker-compose*.yml
+
+# Игнорируем документацию
+*.md
+LICENSE
+
+# Игнорируем специфичные для Go файлы
+vendor/
+*.pb.go
+__debug_bin
+
+# Игнорируем сам Docker-контекст
+Dockerfile
+.dockerignore
+
+# Игнорируем временные файлы
+*.tmp
+*.temp
+*~

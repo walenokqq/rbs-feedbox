@@ -7,19 +7,19 @@ import (
 
 // Service - бизнес-логика и взаимодействие с хранилищем данных
 type Service struct {
-	storage *postgres.Storagepostgres
+	storage *postgres.StoragePostgres
 }
 
 // New - конструктор для создания нового экземпляра Service
 // принимает хранилище данных и возвращает новый объект Service
-func New(storage *postgres.Storagepostgres) *Service {
+func New(storage *postgres.StoragePostgres) *Service {
 	return &Service{storage: storage}
 }
 
 // CreateForm - создаёт новую форму
 // принимает название и схему формы, вызывает соответствующий метод в хранилище
-func (s *Service) CreateForm(name, schema string) error {
-	return s.storage.CreateForm(name, schema)
+func (s *Service) CreateForm(name, schema, description string, projectID int) error {
+	return s.storage.CreateForm(name, schema, description, projectID)
 }
 
 // GetForms - возвращает список всех форм
@@ -33,10 +33,12 @@ func (s *Service) GetForms() ([]models.Form, error) {
 	var result []models.Form
 	for _, f := range pgForms {
 		result = append(result, models.Form{
-			ID:        f.ID,
-			Name:      f.Name,
-			Schema:    f.Schema,
-			CreatedAt: f.CreatedAt,
+			ID:          f.ID,
+			ProjectID:   f.ProjectID,
+			Title:       f.Title,
+			Description: f.Description,
+			Schema:      f.Schema,
+			CreatedAt:   f.CreatedAt,
 		})
 	}
 
@@ -52,10 +54,12 @@ func (s *Service) GetFormByID(id int) (models.Form, error) {
 	}
 
 	return models.Form{
-		ID:        f.ID,
-		Name:      f.Name,
-		Schema:    f.Schema,
-		CreatedAt: f.CreatedAt,
+		ID:          f.ID,
+		ProjectID:   f.ProjectID,
+		Title:       f.Title,
+		Description: f.Description,
+		Schema:      f.Schema,
+		CreatedAt:   f.CreatedAt,
 	}, nil
 }
 
@@ -90,4 +94,31 @@ func (s *Service) GetResponsesByFormID(formID int) ([]models.Response, error) {
 // UpdateResponseStatus - обновляет статус конкретного ответа по его ID
 func (s *Service) UpdateResponseStatus(id int, status string) error {
 	return s.storage.UpdateResponseStatus(id, status)
+}
+
+// CreateProject создаёт новый проект
+func (s *Service) CreateProject(title, description string) error {
+	return s.storage.CreateProject(title, description)
+}
+
+func (s *Service) GetProjects() ([]postgres.Project, error) {
+	pgProjects, err := s.storage.GetProjects()
+	if err != nil {
+		return nil, err
+	}
+
+	var projects []postgres.Project
+	for _, p := range pgProjects {
+		projects = append(projects, postgres.Project{
+			ID:          p.ID,
+			Title:       p.Title,
+			Description: p.Description,
+			CreatedAt:   p.CreatedAt,
+		})
+	}
+	return projects, nil
+
+}
+func (s *Service) GetFormsByProjectID(projectID int) ([]postgres.Form, error) {
+	return s.storage.GetFormsByProjectID(projectID)
 }

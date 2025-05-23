@@ -2,12 +2,14 @@ package models
 
 import "time"
 
-// Form - структура формы
+// Form — структура для работы с таблицей forms в БД
 type Form struct {
-	ID        int       `json:"id"`
-	Name      string    `json:"name"`
-	Schema    string    `json:"schema"`
-	CreatedAt time.Time `json:"created_at"`
+	ID          int       `json:"id"`
+	ProjectID   int       `json:"project_id"`
+	Title       string    `json:"title"`
+	Description string    `json:"description"`
+	Schema      string    `json:"schema"`
+	CreatedAt   time.Time `json:"created_at"`
 }
 
 // Response - структура ответа на форму

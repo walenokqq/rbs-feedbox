@@ -13,17 +13,21 @@ import (
 // main - инициализирует хранилище, сервисный слой и регистрирует HTTP-маршруты.
 func main() {
 	dsn := fmt.Sprintf(
-		"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
-		os.Getenv("DB_HOST"),
-		os.Getenv("DB_PORT"),
+		"postgres://%s:%s@%s:%s/%s?sslmode=disable",
 		os.Getenv("DB_USER"),
 		os.Getenv("DB_PASSWORD"),
+		os.Getenv("DB_HOST"),
+		os.Getenv("DB_PORT"),
 		os.Getenv("DB_NAME"),
 	)
-	storage := postgres.NewStoragepostgres(dsn)
+	storage := postgres.NewStoragePostgres(dsn)
 	svc := service.New(storage)
 
 	httproutes.Register(svc)
+
+	// fs := http.FileServer(http.Dir("./public"))
+	// http.Handle("/", fs)
+
 	fmt.Println("Сервер запущен на http://localhost:8080")
 	http.ListenAndServe(":8080", nil)
 }

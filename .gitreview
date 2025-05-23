@@ -1,0 +1,5 @@
+[gerrit]
+host=git.rainbowsoft.ru
+port=29418
+project=trainee-rbs-feedbox
+

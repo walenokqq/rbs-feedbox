@@ -2,25 +2,23 @@ package postgres
 
 import (
 	"database/sql"
-	"fmt"
+	"log"
 
 	_ "github.com/lib/pq"
 )
 
-type Storagepostgres struct {
+type StoragePostgres struct {
 	db *sql.DB
 }
 
-//подключение
-
-func NewStoragepostgres(dsn string) *Storagepostgres {
+func NewStoragePostgres(dsn string) *StoragePostgres {
 	db, err := sql.Open("postgres", dsn)
 	if err != nil {
-		panic("Ошибка подкл" + err.Error())
+		log.Fatalf("Ошибка подключения к базе данных: %v", err)
 	}
 	if err = db.Ping(); err != nil {
-		panic("Недоступн база" + err.Error())
+		log.Fatalf("Недоступна база данных: %v", err)
 	}
-	fmt.Println("Подключено")
-	return &Storagepostgres{db: db}
+	log.Println("Подключение к базе данных успешно установлено")
+	return &StoragePostgres{db: db}
 }
